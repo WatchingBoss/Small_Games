@@ -40,7 +40,6 @@ game()
 
 	const int startx = (COLS - width) / 2, starty = (LINES - height) / 2;
 
-
 	while(answer == 'y' || answer == 'Y')
 	{
 		nodelay(stdscr, TRUE);
@@ -83,17 +82,19 @@ action(int starty, int startx)
 	wborder(win, '*', '*', '*', '*', '+', '+', '+', '+');
 
 	mvwprintw(win, fY, fX, "%c", 'U');
+
 	mvwprintw(win, y, x, "%c", 'O');
 	for(int i = 0; i < tail; ++i)
 	{
 		mvwprintw(win, tailY[i], tailX[i], "%c", 'o');
 	}
-
+	
 	wrefresh(win);
 
 	mvprintw(starty - 2, startx + 10, "Score: %d", score);
 
 	refresh();
+
 	usleep(80000);
 }
 
