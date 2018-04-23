@@ -81,12 +81,12 @@ action(int starty, int startx)
 	box(win, 0, 0);
 	wborder(win, '*', '*', '*', '*', '+', '+', '+', '+');
 
-	mvwprintw(win, fY, fX, "%c", 'U');
+	mvwprintw(win, fY, fX, "U");
 
-	mvwprintw(win, y, x, "%c", 'O');
+	mvwprintw(win, y, x, "O");
 	for(int i = 0; i < tail; ++i)
 	{
-		mvwprintw(win, tailY[i], tailX[i], "%c", 'o');
+		mvwprintw(win, tailY[i], tailX[i], "o");
 	}
 	
 	wrefresh(win);
