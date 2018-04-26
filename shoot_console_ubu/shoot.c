@@ -143,6 +143,7 @@ void action(WinMain *pWin, Player *pPl1, Player *pSh, int *arr)
 
 void logic(WinMain *pWin, Player *pPl1, Player *pSh, int *arr)
 {
+	int i = 0;
 	switch(ctrl)
 	{
 		case LEFT:
@@ -154,9 +155,8 @@ void logic(WinMain *pWin, Player *pPl1, Player *pSh, int *arr)
 			++pSh->positionX;
 			break;
 		case SPACE:
-			int i = 0;
 			pSh[i].skin = '|';
-			++i
+			++i;
 			break;
 		default:
 			break;
