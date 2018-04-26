@@ -37,6 +37,10 @@ game()
 	noecho();
 	curs_set(FALSE); 
 	keypad(stdscr, TRUE);
+	start_color();
+	init_pair(1, COLOR_YELLOW, COLOR_YELLOW);
+	init_pair(2, COLOR_BLUE, COLOR_BLUE);
+	init_pair(3, COLOR_RED, COLOR_RED);
 
 	const int startx = (COLS - width) / 2, starty = (LINES - height) / 2;
 
@@ -79,15 +83,21 @@ action(int starty, int startx)
 	WINDOW *win;
 	win = newwin(height, width, starty, startx);
 	box(win, 0, 0);
+	wattron(win,COLOR_PAIR(1));
 	wborder(win, '*', '*', '*', '*', '+', '+', '+', '+');
+	wattroff(win,COLOR_PAIR(1));
 
+	wattron(win,COLOR_PAIR(2));
 	mvwprintw(win, fY, fX, "U");
+	wattroff(win,COLOR_PAIR(2));
 
+	wattron(win,COLOR_PAIR(3));
 	mvwprintw(win, y, x, "O");
 	for(int i = 0; i < tail; ++i)
 	{
 		mvwprintw(win, tailY[i], tailX[i], "o");
 	}
+	wattroff(win,COLOR_PAIR(3));
 	
 	wrefresh(win);
 
