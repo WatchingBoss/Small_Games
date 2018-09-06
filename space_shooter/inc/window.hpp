@@ -1,6 +1,7 @@
 #ifndef WINDOW_H
 #define WINDOW_H
 
+#include "param.h"
 #include "common.hpp"
 
 #define MW_WIDTH  1024
@@ -8,7 +9,7 @@
 #define MW_WIDTH_F  (float)MW_WIDTH
 #define MW_HEIGHT_F (float)MW_HEIGHT
 
-#define POSITION_CHANGING_VALUE 25.f
+#define POSITION_CHANGING_VALUE 12.f
 
 /* Window */
 extern void
@@ -21,6 +22,7 @@ framebuffer_size_callback(GLFWwindow *win, int width, int height);
 
 /* INPUT */
 extern float position_changing[3];
+extern bool HB_shoot[HB_NUM];
 
 extern void
 key_callback(GLFWwindow *win, int key, int scancode, int action, int mods);

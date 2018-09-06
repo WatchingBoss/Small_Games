@@ -35,6 +35,7 @@ framebuffer_size_callback(GLFWwindow *win, int width, int height)
 
 /* INPUT */
 float position_changing[3] = {0};
+bool HB_shoot[HB_NUM] = {0};
 
 void
 key_callback(GLFWwindow *win, int key, int scancode, int action, int mods)
@@ -63,6 +64,19 @@ key_callback(GLFWwindow *win, int key, int scancode, int action, int mods)
 	  case GLFW_KEY_LEFT:
 		  if(action == GLFW_PRESS)
 			  position_changing[0]  = -position_changing_value;
+		  break;
+	  case GLFW_KEY_SPACE:
+		  if(action == GLFW_PRESS)
+		  {
+			  for(size_t i = 0; i < HB_NUM; ++i)
+			  {
+				  if(!HB_shoot[i])
+				  {
+					  HB_shoot[i] = true;
+					  break;
+				  }
+			  }
+		  }
 		  break;
 	}
 

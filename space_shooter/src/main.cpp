@@ -6,6 +6,7 @@
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
 
+#include "../inc/param.h"
 #include "../inc/common.hpp"
 #include "../inc/draw.hpp"
 #include "../inc/buffer.hpp"
@@ -17,20 +18,6 @@
 #include "glm/glm.hpp"
 #include "glm/gtc/matrix_transform.hpp"
 #include "glm/gtc/type_ptr.hpp"
-
-template<typename Ship_position, size_t B_NUM>
-struct GameObject
-{
-	VertexArray ship_va;
-	VertexArray blaster_va;
-	IndexBuffer ship_ib;
-	IndexBuffer blaster_ib;
-	Shader      ship_shader;
-	Shader      blaster_shader;
-	Texture     tex;
-	Ship_position ShipPos;
-	std::array<glm::vec3, B_NUM> BlasterPos;
-};
 
 static void
 mainWindow()
@@ -81,10 +68,10 @@ mainWindow()
 		};
 
 		float Blaster[] = {
-			0.f,  0.f,  0.f, 0.f, 0.f,
-			2.f,  10.f, 0.f, 1.f, 1.f,
-			2.f,  0.f,  0.f, 1.f, 0.f,
-			0.f,  10.f, 0.f, 0.f, 1.f
+			0.f,  0.f,  0.f,
+			5.f,  10.f, 0.f, 
+			5.f,  0.f,  0.f, 
+			0.f,  10.f, 0.f
 		};
 
 		VertexArray Ship_vao;
@@ -100,7 +87,7 @@ mainWindow()
 		Texture HS_tex("../media/heroship.png");
 		Texture ES_tex("../media/enemyship.png");
 
-		Shader shader("../shader/vert.vert", "../shader/ship.frag");
+		Shader shader("../shader/ship.vert", "../shader/ship.frag");
 		shader.Bind();
 		shader.SetUniform1i("Texture1", 0);
 		shader.SetUniformMatrix4fv("proj", 1, GL_FALSE, glm::value_ptr(proj));
@@ -114,13 +101,15 @@ mainWindow()
 		VertexBuffer Blaster_vbo(Blaster, sizeof Blaster);
 		VertexBufferLayout Blaster_layout;
 		Blaster_layout.Push(3, MY_FLOAT);
-		Blaster_layout.Push(2, MY_FLOAT);
+//		Blaster_layout.Push(2, MY_FLOAT);
 		Blaster_vao.AddBuffer(Blaster_vbo, Blaster_layout);
 
 		IndexBuffer Blaster_ibo(index, sizeof index / sizeof *index);
 
-		Shader Blaster_shader("../shader/vert.vert", "../shader/blaster.frag");
+		Shader Blaster_shader("../shader/blaster.vert", "../shader/blaster.frag");
 		Blaster_shader.Bind();
+		Blaster_shader.SetUniformMatrix4fv("proj", 1, GL_FALSE,
+										   glm::value_ptr(proj));
 		Blaster_shader.SetUniform3f("u_Color", 1.f, 0.f, 0.f);
 		Blaster_shader.Unbind();
 
@@ -131,22 +120,22 @@ mainWindow()
 		Renderer rend;
 
 		glm::vec3 HS_pos(MW_WIDTH_F / 2.f - 50.f, 25.f, 0.f);
-		std::array<glm::vec3, 24> ES_pos;
-		for(size_t j = 0, i = 0; j < 4; ++j)
-			for(size_t ii = 0; ii < 6; ++ii, ++i)
-				ES_pos.at(i) = glm::vec3(50.f + 50 * ii,
+		std::array<glm::vec3, ES_NUM> ES_pos;
+		for(size_t j = 0, i = 0; j < 3; ++j)
+			for(size_t ii = 0; ii < 10; ++ii, ++i)
+				ES_pos.at(i) = glm::vec3(10.f + 75 * ii,
 										 MW_HEIGHT_F - 100.f * (j + 1) - 25.f,
 										 0.f);
-		std::array<glm::vec3, 15> HB_pos;
+		std::array<glm::vec3, HB_NUM> HB_pos;
 		HB_pos.fill(glm::vec3(0));
-		std::array<glm::vec3, 40> EB_pos;
+		std::array<glm::vec3, EB_NUM> EB_pos;
 		EB_pos.fill(glm::vec3(0));
 
-		GameObject<glm::vec3, 15> Hero{
+		GameObject<glm::vec3, HB_NUM> HeroObj{
 			Ship_vao, Blaster_vao, Ship_ibo, Blaster_ibo,
 				shader, Blaster_shader, HS_tex, HS_pos, HB_pos
 				};
-		GameObject<std::array<glm::vec3, 24>, 40> Enemy{
+		GameObject<std::array<glm::vec3, ES_NUM>, EB_NUM> EnemyObj{
 			Ship_vao, Blaster_vao, Ship_ibo, Blaster_ibo,
 				shader, Blaster_shader, ES_tex, ES_pos, EB_pos
 				};
@@ -157,7 +146,9 @@ mainWindow()
 
 			rend.Clear(0.35f, 0.7f, 0.3f, 1.f);
 
-//			Drawing(rend, );
+			DrawHeroShip(rend, &HeroObj);
+			DrawEnemyShip(rend, &EnemyObj);
+			Check_Intersecting(&HeroObj, &EnemyObj);
 
 			glfwSwapBuffers(window);
 			glfwPollEvents();

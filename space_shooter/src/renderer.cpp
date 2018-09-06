@@ -13,11 +13,11 @@ void
 Renderer::DrawElements(const VertexArray &va, const IndexBuffer &ib,
 					   const Shader &shader) const
 {
-//	Bind(va, ib, shader);
+	Bind(va, ib, shader);
 
 	GLCALL(glDrawElements(GL_TRIANGLES, ib.GetCount(), GL_UNSIGNED_INT, nullptr));
 
-//	Unbind(va, ib, shader);
+	Unbind(va, ib, shader);
 }
 
 void
