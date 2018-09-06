@@ -1,7 +1,7 @@
 #ifndef WINDOW_H
 #define WINDOW_H
 
-#include "param.h"
+#include "param.hpp"
 #include "common.hpp"
 
 #define MW_WIDTH  1024

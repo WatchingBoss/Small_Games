@@ -6,7 +6,7 @@
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
 
-#include "../inc/param.h"
+#include "../inc/param.hpp"
 #include "../inc/common.hpp"
 #include "../inc/draw.hpp"
 #include "../inc/buffer.hpp"
@@ -56,10 +56,10 @@ mainWindow()
 		proj = glm::ortho(0.f, MW_WIDTH_F, 0.f, MW_HEIGHT_F, -1.f, 1.f);
 
 		float Ship[] = {
-			0.f,  0.f,   0.f, 0.f, 0.f,
-			50.f, 100.f, 0.f, 1.f, 1.f,
-			50.f, 0.f,   0.f, 1.f, 0.f,
-			0.f,  100.f, 0.f, 0.f, 1.f
+			0.f,        0.f,         0.f, 0.f, 0.f,
+			SHIP_WIDTH, SHIP_HEIGHT, 0.f, 1.f, 1.f,
+			SHIP_WIDTH, 0.f,         0.f, 1.f, 0.f,
+			0.f,        SHIP_HEIGHT, 0.f, 0.f, 1.f
 		};
 
 		uint32 index[] = {
@@ -68,10 +68,10 @@ mainWindow()
 		};
 
 		float Blaster[] = {
-			0.f,  0.f,  0.f,
-			5.f,  10.f, 0.f, 
-			5.f,  0.f,  0.f, 
-			0.f,  10.f, 0.f
+			0.f,            0.f,            0.f,
+			BLASTER_WIDTH,  BLASTER_HEIGHT, 0.f, 
+			BLASTER_WIDTH,  0.f,  0.f, 
+			0.f,            BLASTER_HEIGHT, 0.f
 		};
 
 		VertexArray Ship_vao;
@@ -119,11 +119,11 @@ mainWindow()
 
 		Renderer rend;
 
-		glm::vec3 HS_pos(MW_WIDTH_F / 2.f - 50.f, 25.f, 0.f);
+		glm::vec3 HS_pos(MW_WIDTH_F / 2.f - SHIP_WIDTH / 2.f, 25.f, 0.f);
 		std::array<glm::vec3, ES_NUM> ES_pos;
 		for(size_t j = 0, i = 0; j < 3; ++j)
-			for(size_t ii = 0; ii < 10; ++ii, ++i)
-				ES_pos.at(i) = glm::vec3(10.f + 75 * ii,
+			for(size_t ii = 0; ii < (ES_NUM / 3); ++ii, ++i)
+				ES_pos.at(i) = glm::vec3(10.f + 75.f * (float)ii,
 										 MW_HEIGHT_F - 100.f * (j + 1) - 25.f,
 										 0.f);
 		std::array<glm::vec3, HB_NUM> HB_pos;

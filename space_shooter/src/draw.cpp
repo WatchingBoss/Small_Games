@@ -2,8 +2,8 @@
 #include "iostream"
 
 #define REQUEST_TO_BOARD (POSITION_CHANGING_VALUE / 5)
-#define MAX_BOARD_X (MW_WIDTH_F - 25.f)
-#define MIN_BOARD (-25.f)
+#define MAX_BOARD_X (MW_WIDTH_F - SHIP_WIDTH / 2.f)
+#define MIN_BOARD (- SHIP_WIDTH / 2.f)
 #define BLASTER_SPEED 10.f
 
 static bool HS_InS = 0, ES_InS[ES_NUM] = {0},
@@ -13,17 +13,48 @@ void
 Check_Intersecting(GameObject<glm::vec3, HB_NUM> *hero ,
 				   GameObject<std::array<glm::vec3, ES_NUM>, EB_NUM> *enemy)
 {
-	const glm::vec3 &hs_pos = hero->ship_pos;
-	const auto      &es_pos = enemy->ship_pos;
-	const auto      &hb_pos = hero->blaster_pos;
-	const auto      &eb_pos = enemy->blaster_pos;
+	const glm::vec3 &hs_position = hero->ship_pos;
+	const auto      &es_position = enemy->ship_pos;
+	const auto      &hb_position = hero->blaster_pos;
+	const auto      &eb_position = enemy->blaster_pos;
 
-	for(size_t es = 0; es < ES_NUM; ++es)
+	for(size_t hb = 0; hb < HB_NUM; ++hb)
 	{
-		for(size_t hb = 0; hb < HB_NUM; ++hb)
+		if(!HB_shoot[hb])
+			continue;
+
+		for(size_t es = 0; es < ES_NUM; ++es)
 		{
-			
-			if()
+			const glm::vec3 hb_pos = hb_position.at(hb);
+			const glm::vec3 es_pos = es_position.at(es);
+
+			const float first[2] = {hb_pos[0] + 5, hb_pos[1]};
+			const float second[2] = {hb_pos[0] + 5, hb_pos[1] + 10};
+			for(float x = es_pos[0], y = es_pos[1];
+				y <= es_pos[1] + SHIP_HEIGHT; y += 1.f)
+				if( first[0]  == x || first[1]  == y ||
+				    second[0] == x || second[1] == y   )
+				{
+					HB_InS[hb] = true;
+					ES_InS[es] = true;
+				}
+			for(float x = es_pos[0], y = es_pos[1];
+				x <= es_pos[0] + SHIP_WIDTH; x += 1.f)
+				if( first[0]  == x || first[1]  == y ||
+				    second[0] == x || second[1] == y   )
+				{
+					HB_InS[hb] = true;
+					ES_InS[es] = true;
+				}
+			for(float x = es_pos[0] + SHIP_WIDTH, y = es_pos[1];
+				y <= es_pos[1] + SHIP_HEIGHT; y += 1.f)
+				if( first[0]  == x || first[1]  == y ||
+				    second[0] == x || second[1] == y   )
+				{
+					HB_InS[hb] = true;
+					ES_InS[es] = true;
+				}
+				
 		}
 	}
 }
@@ -68,8 +99,8 @@ DrawHeroShip(const Renderer &rend,
 
 				if(cb_pos[0] == 0.f)
 				{		
-					cb_pos[0] = s_pos[0] + 21.f;
-					cb_pos[1] = 120.f;
+					cb_pos[0] = s_pos[0] + (SHIP_WIDTH / 2.f - BLASTER_WIDTH / 2.f);
+					cb_pos[1] = SHIP_HEIGHT + 25.f;
 				}				
 
 				cb_pos[1] += BLASTER_SPEED;
@@ -103,7 +134,7 @@ DrawEnemyShip(const Renderer &rend,
 	{
 		float s_x_right = 5.f, s_x_left = -5.f;
 
-		if(s_pos.at(0)[0] > MW_WIDTH_F / 3.f - 50.f)
+		if(s_pos.at(0)[0] > MW_WIDTH_F / 3.f - SHIP_WIDTH)
 			s_x_up = false;
 		else if(s_pos.at(0)[0] <= 10.f)
 			s_x_up = true;

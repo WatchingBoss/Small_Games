@@ -1,13 +1,13 @@
 #ifndef DRAW_H
 #define DRAW_H
 
-#include "param.h"
 #include "common.hpp"
 #include "buffer.hpp"
 #include "shader.hpp"
 #include "texture.hpp"
 #include "renderer.hpp"
 #include "window.hpp"
+#include "param.hpp"
 
 #include "glm/glm.hpp"
 #include "glm/gtc/matrix_transform.hpp"
