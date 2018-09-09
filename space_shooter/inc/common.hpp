@@ -42,4 +42,7 @@ extern void *
 xmalloc(int);
 /* END Dynamic allocation */
 
+extern uint32
+random_in_range(const int &, const int &);
+
 #endif

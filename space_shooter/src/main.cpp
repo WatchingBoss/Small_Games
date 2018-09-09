@@ -2,6 +2,7 @@
 #include <iostream>
 #include <string>
 #include <array>
+#include <thread>
 
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
@@ -121,8 +122,8 @@ mainWindow()
 
 		glm::vec3 HS_pos(MW_WIDTH_F / 2.f - SHIP_WIDTH / 2.f, 25.f, 0.f);
 		std::array<glm::vec3, ES_NUM> ES_pos;
-		for(size_t j = 0, i = 0; j < 3; ++j)
-			for(size_t ii = 0; ii < (ES_NUM / 3); ++ii, ++i)
+		for(size_t j = 0, i = 0; j < ES_RAW_NUM; ++j)
+			for(size_t ii = 0; ii < ES_COL_NUM; ++ii, ++i)
 				ES_pos.at(i) = glm::vec3(10.f + 85.f * (float)ii,
 										 MW_HEIGHT_F - 100.f * (j + 1) - 25.f,
 										 0.f);
@@ -140,6 +141,9 @@ mainWindow()
 				shader, Blaster_shader, ES_tex, ES_pos, EB_pos
 				};
 
+		bool run_game = true;
+		std::thread enemy_shoot_t(let_enemy_shoot, run_game);
+
 		while(!glfwWindowShouldClose(window))
 		{
 			glfwSetKeyCallback(window, key_callback);
@@ -153,6 +157,9 @@ mainWindow()
 			glfwSwapBuffers(window);
 			glfwPollEvents();
 		}
+
+		run_game = false;
+		enemy_shoot_t.join();
 	}
 
 	glfwDestroyWindow(window);

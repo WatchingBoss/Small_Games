@@ -1,6 +1,7 @@
 #include "../inc/common.hpp"
 
 #include <iostream>
+#include <random>
 
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
@@ -43,3 +44,13 @@ xmalloc(int size)
 	return ptr;
 }
 /* END Dynamic allocation */
+
+uint32
+random_in_range(const int &min, const int &max)
+{
+	std::random_device rd;
+	std::mt19937 eng(rd());
+	std::uniform_int_distribution<> distr(min, max);
+
+	return distr(eng);
+}
