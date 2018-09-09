@@ -14,6 +14,7 @@
 #include "glm/gtc/type_ptr.hpp"
 
 #include <array>
+#include <atomic>
 
 template<typename Ship_position, size_t B_NUM>
 struct GameObject
@@ -40,6 +41,6 @@ extern void
 DrawEnemyShip(const Renderer &, GameObject<std::array<glm::vec3, ES_NUM>, EB_NUM> *);
 
 extern void
-let_enemy_shoot(bool);
+let_enemy_shoot(std::atomic<bool> &);
 
 #endif

@@ -1,8 +1,10 @@
 #define GLEW_STATIC
+
 #include <iostream>
 #include <string>
 #include <array>
 #include <thread>
+#include <atomic>
 
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
@@ -141,8 +143,8 @@ mainWindow()
 				shader, Blaster_shader, ES_tex, ES_pos, EB_pos
 				};
 
-		bool run_game = true;
-		std::thread enemy_shoot_t(let_enemy_shoot, run_game);
+		std::atomic<bool> run_game { true };
+		std::thread enemy_shoot_t(let_enemy_shoot, std::ref(run_game));
 
 		while(!glfwWindowShouldClose(window))
 		{
@@ -159,7 +161,8 @@ mainWindow()
 		}
 
 		run_game = false;
-		enemy_shoot_t.join();
+		if(enemy_shoot_t.joinable())
+			enemy_shoot_t.join();
 	}
 
 	glfwDestroyWindow(window);

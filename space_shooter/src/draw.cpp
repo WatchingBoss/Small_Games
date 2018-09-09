@@ -134,7 +134,7 @@ static bool s_x_up = true;
 static bool EB_shoot[EB_NUM] = {0};
 
 void
-let_enemy_shoot(bool run)
+let_enemy_shoot(std::atomic<bool> &run)
 {
 	static double p_time = glfwGetTime();
 	while(run)
@@ -162,7 +162,7 @@ DrawEnemyShip(const Renderer &rend,
 	{
 		float s_x_right = 5.f, s_x_left = -5.f;
 
-		if(s_pos.at(0)[0] > MW_WIDTH_F / 3.f - SHIP_WIDTH)
+		if(s_pos.at(0)[0] > MW_WIDTH_F / 5.f)
 			s_x_up = false;
 		else if(s_pos.at(0)[0] <= 10.f)
 			s_x_up = true;
@@ -196,7 +196,8 @@ DrawEnemyShip(const Renderer &rend,
 	for(size_t i = ES_NUM - 1; i > 0; --i)
 	{
 		if( (i < ES_NUM && i >= (ES_NUM - ES_COL_NUM) && !ES_INS[i]) ||
-			(i < (ES_NUM - ES_COL_NUM) && ES_INS[i + ES_COL_NUM]) )
+			(i < (ES_NUM - ES_COL_NUM) && ES_INS[i + ES_COL_NUM])    &&
+			shoot_ships_num < 9)
 			shoot_ships[shoot_ships_num++] = s_pos.at(i);
 	}
 	
