@@ -123,7 +123,7 @@ mainWindow()
 		std::array<glm::vec3, ES_NUM> ES_pos;
 		for(size_t j = 0, i = 0; j < 3; ++j)
 			for(size_t ii = 0; ii < (ES_NUM / 3); ++ii, ++i)
-				ES_pos.at(i) = glm::vec3(10.f + 75.f * (float)ii,
+				ES_pos.at(i) = glm::vec3(10.f + 85.f * (float)ii,
 										 MW_HEIGHT_F - 100.f * (j + 1) - 25.f,
 										 0.f);
 		std::array<glm::vec3, HB_NUM> HB_pos;
@@ -148,7 +148,7 @@ mainWindow()
 
 			DrawHeroShip(rend, &HeroObj);
 			DrawEnemyShip(rend, &EnemyObj);
-			Check_Intersecting(&HeroObj, &EnemyObj);
+			Check_Intersection(&HeroObj, &EnemyObj);
 
 			glfwSwapBuffers(window);
 			glfwPollEvents();

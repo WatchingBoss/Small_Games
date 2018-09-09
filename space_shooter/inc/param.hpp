@@ -4,7 +4,7 @@
 /* Ship and Blaster count */
 #define ES_NUM 30
 #define EB_NUM 40
-#define HB_NUM 15
+#define HB_NUM 5
 
 /* Ship and Blaster dimansions */
 #define SHIP_WIDTH     50.f

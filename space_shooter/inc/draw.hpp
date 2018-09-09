@@ -30,7 +30,7 @@ struct GameObject
 };
 
 extern void
-Check_Intersecting(GameObject<glm::vec3, HB_NUM> *,
+Check_Intersection(GameObject<glm::vec3, HB_NUM> *,
 				   GameObject<std::array<glm::vec3, ES_NUM>, EB_NUM> *);
 
 extern void

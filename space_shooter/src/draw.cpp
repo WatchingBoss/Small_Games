@@ -6,17 +6,28 @@
 #define MIN_BOARD (- SHIP_WIDTH / 2.f)
 #define BLASTER_SPEED 10.f
 
-static bool HS_InS = 0, ES_InS[ES_NUM] = {0},
-	HB_InS[HB_NUM] = {0}, EB_InS[EB_NUM] = {0};
+static bool HS_INS = 0, ES_INS[ES_NUM] = {0},
+	HB_INS[HB_NUM] = {0}, EB_INS[EB_NUM] = {0};
 
 void
-Check_Intersecting(GameObject<glm::vec3, HB_NUM> *hero ,
+intersection_occur(bool &blaster_ins, bool &blaster_shoot, bool &ship_ins,
+				   glm::vec3 &blaster_pos)
+{
+	blaster_shoot  = false;
+	blaster_ins    = true;
+	ship_ins       = true;
+	blaster_pos[0] = 0;
+	blaster_pos[1] = 0;
+}
+
+void
+Check_Intersection(GameObject<glm::vec3, HB_NUM> *hero ,
 				   GameObject<std::array<glm::vec3, ES_NUM>, EB_NUM> *enemy)
 {
-	const glm::vec3 &hs_position = hero->ship_pos;
-	const auto      &es_position = enemy->ship_pos;
-	const auto      &hb_position = hero->blaster_pos;
-	const auto      &eb_position = enemy->blaster_pos;
+	glm::vec3 &hs_position = hero->ship_pos;
+	auto      &es_position = enemy->ship_pos;
+	auto      &hb_position = hero->blaster_pos;
+	auto      &eb_position = enemy->blaster_pos;
 
 	for(size_t hb = 0; hb < HB_NUM; ++hb)
 	{
@@ -25,36 +36,29 @@ Check_Intersecting(GameObject<glm::vec3, HB_NUM> *hero ,
 
 		for(size_t es = 0; es < ES_NUM; ++es)
 		{
-			const glm::vec3 hb_pos = hb_position.at(hb);
-			const glm::vec3 es_pos = es_position.at(es);
+			if(ES_INS[es])
+				continue;
 
-			const float first[2] = {hb_pos[0] + 5, hb_pos[1]};
-			const float second[2] = {hb_pos[0] + 5, hb_pos[1] + 10};
-			for(float x = es_pos[0], y = es_pos[1];
-				y <= es_pos[1] + SHIP_HEIGHT; y += 1.f)
-				if( first[0]  == x || first[1]  == y ||
-				    second[0] == x || second[1] == y   )
-				{
-					HB_InS[hb] = true;
-					ES_InS[es] = true;
-				}
-			for(float x = es_pos[0], y = es_pos[1];
-				x <= es_pos[0] + SHIP_WIDTH; x += 1.f)
-				if( first[0]  == x || first[1]  == y ||
-				    second[0] == x || second[1] == y   )
-				{
-					HB_InS[hb] = true;
-					ES_InS[es] = true;
-				}
-			for(float x = es_pos[0] + SHIP_WIDTH, y = es_pos[1];
-				y <= es_pos[1] + SHIP_HEIGHT; y += 1.f)
-				if( first[0]  == x || first[1]  == y ||
-				    second[0] == x || second[1] == y   )
-				{
-					HB_InS[hb] = true;
-					ES_InS[es] = true;
-				}
-				
+			glm::vec3 &hb_pos = hb_position.at(hb);
+			glm::vec3 &es_pos = es_position.at(es);
+
+			const float leftV[2]  = { hb_pos[0], hb_pos[1] + BLASTER_HEIGHT };
+			const float rightV[2] = { hb_pos[0] + BLASTER_WIDTH,
+									  hb_pos[1] + BLASTER_HEIGHT };
+
+			if( (es_pos[0] <= leftV[0] && es_pos[0] + SHIP_HEIGHT >= leftV[0] &&
+				es_pos[1] == leftV[1]) ||
+				(es_pos[0] <= rightV[0] && es_pos[0] + SHIP_HEIGHT >= rightV[0] &&
+				es_pos[1] == rightV[1]))
+				intersection_occur(HB_INS[hb], HB_shoot[hb], ES_INS[es], hb_pos);
+
+			if(es_pos[0] + SHIP_HEIGHT == leftV[0] &&
+				es_pos[1] <= leftV[1] && es_pos[1] + SHIP_HEIGHT >= leftV[1])
+				intersection_occur(HB_INS[hb], HB_shoot[hb], ES_INS[es], hb_pos);
+
+			if(es_pos[0] == rightV[0] && es_pos[1] <= rightV[1] &&
+				es_pos[1] + SHIP_HEIGHT >= rightV[1])
+				intersection_occur(HB_INS[hb], HB_shoot[hb], ES_INS[es], hb_pos);
 		}
 	}
 }
@@ -63,7 +67,7 @@ void
 DrawHeroShip(const Renderer &rend,
 			 GameObject<glm::vec3, HB_NUM> *hero)
 {
-	/* SHIP DRAWING */
+	/* SHIP */
 	glm::vec3 &s_pos = hero->ship_pos;
 	{
 		if(s_pos[0] < MAX_BOARD_X && s_pos[0] > MIN_BOARD)
@@ -87,7 +91,7 @@ DrawHeroShip(const Renderer &rend,
 		rend.DrawElements(hero->ship_va, hero->ship_ib, hero->ship_shader);
 	}
 
-	/* BLASTER DRAWING */
+	/* BLASTERS */
 	{
 		rend.Bind(hero->blaster_va, hero->blaster_ib, hero->blaster_shader);
 
@@ -131,6 +135,7 @@ DrawEnemyShip(const Renderer &rend,
 			  GameObject<std::array<glm::vec3, ES_NUM>, EB_NUM> *enemy)
 {
 	auto &s_pos = enemy->ship_pos;
+	/* SHIPS */
 	{
 		float s_x_right = 5.f, s_x_left = -5.f;
 
@@ -148,6 +153,8 @@ DrawEnemyShip(const Renderer &rend,
 		enemy->tex.Bind(0);
 		for(size_t i = 0; i < ES_NUM; ++i)
 		{
+			if(ES_INS[i])
+				continue;
 			glm::mat4 model(1.f);
 			model = glm::translate(model, s_pos.at(i));
 			enemy->ship_shader.SetUniformMatrix4fv("model", 1, GL_FALSE,
@@ -157,6 +164,7 @@ DrawEnemyShip(const Renderer &rend,
 
 		rend.Unbind(enemy->ship_va, enemy->ship_ib, enemy->ship_shader);
 	}
+	/* BLASTERS */
 }
 
 #undef REQUEST_TO_BOARD
