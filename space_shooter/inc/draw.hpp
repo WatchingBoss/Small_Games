@@ -16,6 +16,8 @@
 #include <array>
 #include <atomic>
 
+extern bool gameOver, gameWin;
+
 template<typename Ship_position, size_t B_NUM>
 struct GameObject
 {

@@ -22,6 +22,8 @@
 #include "glm/gtc/matrix_transform.hpp"
 #include "glm/gtc/type_ptr.hpp"
 
+bool gameOver = false, gameWin = false;
+
 static void
 mainWindow()
 {
@@ -152,17 +154,27 @@ mainWindow()
 
 			rend.Clear(0.35f, 0.7f, 0.3f, 1.f);
 
-			DrawHeroShip(rend, &HeroObj);
-			DrawEnemyShip(rend, &EnemyObj);
-			Check_Intersection(&HeroObj, &EnemyObj);
+			if(!gameOver && !gameWin)
+			{
+				DrawHeroShip(rend, &HeroObj);
+				DrawEnemyShip(rend, &EnemyObj);
+				Check_Intersection(&HeroObj, &EnemyObj);
+			}
+			else if(gameOver)
+			{
+				
+			}
+			else if(gameWin)
+			{
 
+			}
+			
 			glfwSwapBuffers(window);
 			glfwPollEvents();
 		}
 
 		run_game = false;
-		if(enemy_shoot_t.joinable())
-			enemy_shoot_t.join();
+		enemy_shoot_t.join();
 	}
 
 	glfwDestroyWindow(window);

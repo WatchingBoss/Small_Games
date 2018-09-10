@@ -1,6 +1,6 @@
 #include "../inc/draw.hpp"
 
-#include <iostream>
+#include <cstdio>
 
 #define REQUEST_TO_BOARD (POSITION_CHANGING_VALUE / 5)
 #define MAX_BOARD_X (MW_WIDTH_F - SHIP_WIDTH / 2.f)
@@ -9,6 +9,9 @@
 
 static bool HS_INS = 0, ES_INS[ES_NUM] = {0},
 	HB_INS[HB_NUM] = {0}, EB_INS[EB_NUM] = {0};
+
+bool HB_shoot[HB_NUM] = {0};
+static bool EB_shoot[EB_NUM] = {0};
 
 static inline void
 blaster_return(bool &b_shoot, glm::vec3 &b_pos)
@@ -31,7 +34,7 @@ void
 Check_Intersection(GameObject<glm::vec3, HB_NUM> *hero ,
 				   GameObject<std::array<glm::vec3, ES_NUM>, EB_NUM> *enemy)
 {
-	glm::vec3 &hs_position = hero->ship_pos;
+	glm::vec3 &hs_pos      = hero->ship_pos;
 	auto      &es_position = enemy->ship_pos;
 	auto      &hb_position = hero->blaster_pos;
 	auto      &eb_position = enemy->blaster_pos;
@@ -65,6 +68,27 @@ Check_Intersection(GameObject<glm::vec3, HB_NUM> *hero ,
 					 es_pos[1] + SHIP_HEIGHT >= rightV[1] )
 				intersection_occur(HB_INS[hb], HB_shoot[hb], ES_INS[es], hb_pos);
 		}
+	}
+
+	for(size_t eb = 0; eb < EB_NUM; ++eb)
+	{
+		if(!EB_shoot[eb])
+			continue;
+
+		const glm::vec3 &eb_pos = eb_position.at(eb);
+		const float leftV[2]  = { eb_pos[0], eb_pos[1] - BLASTER_HEIGHT };
+		const float rightV[2] = { eb_pos[0] + BLASTER_WIDTH,
+								  eb_pos[1] - BLASTER_HEIGHT };
+
+		if( ((hs_pos[1] == leftV[1] && 
+			  hs_pos[0] <= leftV[0] && hs_pos[0] + SHIP_WIDTH >= leftV[0]) ||
+			 (hs_pos[1] == rightV[1] && 
+			  hs_pos[0] <= rightV[0] && hs_pos[0] + SHIP_WIDTH >= rightV[0]))  || 
+			(hs_pos[0] == rightV[0] &&
+			 hs_pos[1] <= rightV[1] && hs_pos[1] + SHIP_HEIGHT >= rightV[1])   ||
+			(hs_pos[0] + SHIP_WIDTH == leftV[0] &&
+			 hs_pos[1] <= leftV[1] && hs_pos[1] + SHIP_HEIGHT >= leftV[1]) )
+			gameOver = true;
 	}
 }
 
@@ -131,7 +155,6 @@ DrawHeroShip(const Renderer &rend,
 }
 
 static bool s_x_up = true;
-static bool EB_shoot[EB_NUM] = {0};
 
 void
 let_enemy_shoot(std::atomic<bool> &run)
@@ -195,41 +218,37 @@ DrawEnemyShip(const Renderer &rend,
 
 	for(size_t i = ES_NUM - 1; i > 0; --i)
 	{
-		if( (i < ES_NUM && i >= (ES_NUM - ES_COL_NUM) && !ES_INS[i]) ||
-			(i < (ES_NUM - ES_COL_NUM) && ES_INS[i + ES_COL_NUM])    &&
-			shoot_ships_num < 9)
+		if( !ES_INS[i] && ((i < ES_NUM && i > (ES_NUM - ES_COL_NUM)) ||
+						   (i < (ES_NUM - ES_COL_NUM) && ES_INS[i + ES_COL_NUM])) )
 			shoot_ships[shoot_ships_num++] = s_pos.at(i);
 	}
 	
-	for(size_t i = 0; i < ES_COL_NUM; ++i)
-	{
-		size_t rand_ship = random_in_range(0, 9);
-		const glm::vec3 &cs_pos = shoot_ships.at(rand_ship);
-		for(size_t b = 0; b < EB_NUM; ++b)
-			if(EB_shoot[b])
+	size_t rand_ship = random_in_range(0, 9);
+	const glm::vec3 &cs_pos = shoot_ships.at(rand_ship);
+	for(size_t b = 0; b < EB_NUM; ++b)
+		if(EB_shoot[b])
+		{
+			glm::vec3 &cb_pos = b_pos.at(b);
+
+			if(cb_pos[0] == 0)
 			{
-				glm::vec3 &cb_pos = b_pos.at(b);
-
-				if(cb_pos[0] == 0)
-				{
-					cb_pos[0] = cs_pos[0] + (SHIP_WIDTH / 2 - BLASTER_WIDTH / 2);
-					cb_pos[1] = cs_pos[1] - BLASTER_HEIGHT;
-				}
-
-				cb_pos[1] -= BLASTER_SPEED;
-
-				glm::mat4 model(1.f);
-				model = glm::translate(model, cb_pos);
-				enemy->
-					blaster_shader.SetUniformMatrix4fv("model", 1, GL_FALSE,
-													   glm::value_ptr(model));
-
-				rend.DrawElements(enemy->blaster_ib.GetCount());
-
-				if(cb_pos[1] < 0)
-					blaster_return(EB_shoot[b], cb_pos);
+				cb_pos[0] = cs_pos[0] + (SHIP_WIDTH / 2 - BLASTER_WIDTH / 2);
+				cb_pos[1] = cs_pos[1] - BLASTER_HEIGHT;
 			}
-	}
+
+			cb_pos[1] -= BLASTER_SPEED;
+
+			glm::mat4 model(1.f);
+			model = glm::translate(model, cb_pos);
+			enemy->
+				blaster_shader.SetUniformMatrix4fv("model", 1, GL_FALSE,
+												   glm::value_ptr(model));
+
+			rend.DrawElements(enemy->blaster_ib.GetCount());
+
+			if(cb_pos[1] < 0)
+				blaster_return(EB_shoot[b], cb_pos);
+		}
 
 	rend.Unbind(enemy->blaster_va, enemy->blaster_ib, enemy->blaster_shader);
 }
