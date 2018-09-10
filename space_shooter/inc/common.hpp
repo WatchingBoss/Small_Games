@@ -43,6 +43,9 @@ xmalloc(int);
 /* END Dynamic allocation */
 
 extern uint32
-random_in_range(const int &, const int &);
+random_int_range(const int &, const int &);
+
+extern float
+random_float_range(const float &, const float &);
 
 #endif

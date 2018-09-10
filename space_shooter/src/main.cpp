@@ -22,6 +22,8 @@
 #include "glm/gtc/matrix_transform.hpp"
 #include "glm/gtc/type_ptr.hpp"
 
+#define MY_GLcolor(x) (x / 255.f)
+
 bool gameOver = false, gameWin = false;
 
 static void
@@ -60,6 +62,11 @@ mainWindow()
 		glm::mat4 proj(1.f);
 		proj = glm::ortho(0.f, MW_WIDTH_F, 0.f, MW_HEIGHT_F, -1.f, 1.f);
 
+		Texture HS_tex("../media/heroship.png");
+		Texture ES_tex("../media/enemyship.png");
+		Texture OverPic("../media/over.png");
+		Texture WinPic("../media/win.png");
+
 		float Ship[] = {
 			0.f,        0.f,         0.f, 0.f, 0.f,
 			SHIP_WIDTH, SHIP_HEIGHT, 0.f, 1.f, 1.f,
@@ -79,6 +86,13 @@ mainWindow()
 			0.f,            BLASTER_HEIGHT, 0.f
 		};
 
+		float EndGame[] = {
+			0.f,         0.f,         0.f, 0.f, 0.f,
+			MW_WIDTH_F,  MW_HEIGHT_F, 0.f, 1.f, 1.f,
+			MW_WIDTH_F,  0.f,         0.f, 1.f, 0.f,
+			0.f,         MW_HEIGHT_F, 0.f, 0.f, 1.f
+		};
+
 		VertexArray Ship_vao;
 		VertexBuffer Ship_vbo(Ship, sizeof Ship);
 
@@ -88,9 +102,6 @@ mainWindow()
 		Ship_vao.AddBuffer(Ship_vbo, Ship_layout);
 
 		IndexBuffer Ship_ibo(index, sizeof index / sizeof *index);
-
-		Texture HS_tex("../media/heroship.png");
-		Texture ES_tex("../media/enemyship.png");
 
 		Shader shader("../shader/ship.vert", "../shader/ship.frag");
 		shader.Bind();
@@ -115,12 +126,21 @@ mainWindow()
 		Blaster_shader.Bind();
 		Blaster_shader.SetUniformMatrix4fv("proj", 1, GL_FALSE,
 										   glm::value_ptr(proj));
-		Blaster_shader.SetUniform3f("u_Color", 1.f, 0.f, 0.f);
 		Blaster_shader.Unbind();
-
 		Blaster_vao.Unbind();
 		Blaster_vbo.Unbind();
 		Blaster_ibo.Unbind();
+
+		VertexArray EndGame_vao;
+		VertexBuffer EndGame_vbo(EndGame, sizeof EndGame);
+		VertexBufferLayout EndGame_layout;
+		EndGame_layout.Push(3, MY_FLOAT);
+		EndGame_layout.Push(2, MY_FLOAT);
+		EndGame_vao.AddBuffer(EndGame_vbo, EndGame_layout);
+		IndexBuffer EndGame_ibo(index, sizeof index / sizeof *index);
+		EndGame_vao.Unbind();
+		EndGame_vbo.Unbind();
+		EndGame_ibo.Unbind();
 
 		Renderer rend;
 
@@ -145,14 +165,21 @@ mainWindow()
 				shader, Blaster_shader, ES_tex, ES_pos, EB_pos
 				};
 
+		EndText theEnd {EndGame_vao, EndGame_ibo, shader, OverPic, WinPic};
+
 		std::atomic<bool> run_game { true };
 		std::thread enemy_shoot_t(let_enemy_shoot, std::ref(run_game));
+
+		float background[3] = {
+			MY_GLcolor(18.f), MY_GLcolor(191.f), MY_GLcolor(91.f)
+		};
+		static bool firstCall = false;
 
 		while(!glfwWindowShouldClose(window))
 		{
 			glfwSetKeyCallback(window, key_callback);
 
-			rend.Clear(0.35f, 0.7f, 0.3f, 1.f);
+			rend.Clear(background[0], background[1], background[2], 1.f);
 
 			if(!gameOver && !gameWin)
 			{
@@ -160,13 +187,15 @@ mainWindow()
 				DrawEnemyShip(rend, &EnemyObj);
 				Check_Intersection(&HeroObj, &EnemyObj);
 			}
-			else if(gameOver)
+			else
 			{
-				
-			}
-			else if(gameWin)
-			{
-
+				EndOfGame(&rend, &theEnd, gameWin ? true : false);
+				if(!firstCall)
+				{
+					background[0] = MY_GLcolor(200);
+					background[1] = MY_GLcolor(255);
+					background[2] = MY_GLcolor(150);
+				}
 			}
 			
 			glfwSwapBuffers(window);

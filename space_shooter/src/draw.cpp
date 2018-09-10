@@ -12,6 +12,7 @@ static bool HS_INS = 0, ES_INS[ES_NUM] = {0},
 
 bool HB_shoot[HB_NUM] = {0};
 static bool EB_shoot[EB_NUM] = {0};
+static uint32 countDestroyEnemyShip = 0;
 
 static inline void
 blaster_return(bool &b_shoot, glm::vec3 &b_pos)
@@ -56,17 +57,20 @@ Check_Intersection(GameObject<glm::vec3, HB_NUM> *hero ,
 			const float rightV[2] = { hb_pos[0] + BLASTER_WIDTH,
 									  hb_pos[1] + BLASTER_HEIGHT };
 
-			if( (es_pos[0] <= leftV[0] && es_pos[0] + SHIP_HEIGHT >= leftV[0] &&
-				 es_pos[1] == leftV[1]) ||
-				(es_pos[0] <= rightV[0] && es_pos[0] + SHIP_HEIGHT >= rightV[0] &&
-				 es_pos[1] == rightV[1]) )
+			if( ((es_pos[0] <= leftV[0] && es_pos[0] + SHIP_HEIGHT >= leftV[0]   &&
+				  es_pos[1] == leftV[1]) ||
+				 (es_pos[0] <= rightV[0] && es_pos[0] + SHIP_HEIGHT >= rightV[0] &&
+				  es_pos[1] == rightV[1]))                                         ||
+				(es_pos[0] + SHIP_HEIGHT == leftV[0] &&
+				 es_pos[1] <= leftV[1] && es_pos[1] + SHIP_HEIGHT >= leftV[1])     ||
+				(es_pos[0] == rightV[0] && es_pos[1] <= rightV[1] &&
+				 es_pos[1] + SHIP_HEIGHT >= rightV[1]))
+			{
 				intersection_occur(HB_INS[hb], HB_shoot[hb], ES_INS[es], hb_pos);
-			else if( es_pos[0] + SHIP_HEIGHT == leftV[0] &&
-					 es_pos[1] <= leftV[1] && es_pos[1] + SHIP_HEIGHT >= leftV[1] )
-				intersection_occur(HB_INS[hb], HB_shoot[hb], ES_INS[es], hb_pos);
-			else if( es_pos[0] == rightV[0] && es_pos[1] <= rightV[1] &&
-					 es_pos[1] + SHIP_HEIGHT >= rightV[1] )
-				intersection_occur(HB_INS[hb], HB_shoot[hb], ES_INS[es], hb_pos);
+				++countDestroyEnemyShip;
+				if(countDestroyEnemyShip == ES_NUM)
+					gameWin = true;
+			}
 		}
 	}
 
@@ -142,6 +146,7 @@ DrawHeroShip(const Renderer &rend,
 				model = glm::translate(model, cb_pos);
 				hero->blaster_shader.SetUniformMatrix4fv("model", 1, GL_FALSE,
 														 glm::value_ptr(model));
+				hero->blaster_shader.SetUniform3f("u_Color", 0, 0, 1.f);
 
 				rend.DrawElements(hero->blaster_ib.GetCount());
 
@@ -223,7 +228,7 @@ DrawEnemyShip(const Renderer &rend,
 			shoot_ships[shoot_ships_num++] = s_pos.at(i);
 	}
 	
-	size_t rand_ship = random_in_range(0, 9);
+	size_t rand_ship = random_int_range(0, 9);
 	const glm::vec3 &cs_pos = shoot_ships.at(rand_ship);
 	for(size_t b = 0; b < EB_NUM; ++b)
 		if(EB_shoot[b])
@@ -243,6 +248,7 @@ DrawEnemyShip(const Renderer &rend,
 			enemy->
 				blaster_shader.SetUniformMatrix4fv("model", 1, GL_FALSE,
 												   glm::value_ptr(model));
+			enemy->blaster_shader.SetUniform3f("u_Color", 0.9f, 0.1f, 0);
 
 			rend.DrawElements(enemy->blaster_ib.GetCount());
 
@@ -257,3 +263,15 @@ DrawEnemyShip(const Renderer &rend,
 #undef MAX_BOARD_X
 #undef MIN_BOARD
 #undef BLASTER_SPEED
+
+void
+EndOfGame(const Renderer *rend, EndText *text, const bool &win)
+{
+	win ? text->picWin.Bind(0) : text->picOver.Bind(0);
+
+	text->shader.Bind();
+	glm::mat4 model(1.f);
+	text->shader.SetUniformMatrix4fv("model", 1, GL_FALSE, glm::value_ptr(model));
+	
+	rend->DrawElements(text->va, text->ib, text->shader);
+}

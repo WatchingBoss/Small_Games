@@ -18,6 +18,15 @@
 
 extern bool gameOver, gameWin;
 
+struct EndText
+{
+	VertexArray va;
+	IndexBuffer ib;
+	Shader      shader;
+	Texture     picOver;
+	Texture     picWin;
+};
+
 template<typename Ship_position, size_t B_NUM>
 struct GameObject
 {
@@ -44,5 +53,8 @@ DrawEnemyShip(const Renderer &, GameObject<std::array<glm::vec3, ES_NUM>, EB_NUM
 
 extern void
 let_enemy_shoot(std::atomic<bool> &);
+
+extern void
+EndOfGame(const Renderer *, EndText *, const bool &);
 
 #endif
