@@ -175,8 +175,8 @@ logic()
 			break;
 	}
 
-	if(x == 0) x = width - 1; else if(x == width - 1) x = 1;
-	if(y == 0) y = height -1; else if(y == height - 1) y = 1;
+	if(x == 0) x = width - 2; else if(x == width - 1) x = 1;
+	if(y == 0) y = height -2; else if(y == height - 1) y = 1;
 
 	if(x == fX && y == fY)
 	{
