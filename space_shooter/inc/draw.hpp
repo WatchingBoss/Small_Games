@@ -49,7 +49,8 @@ extern void
 DrawHeroShip(const Renderer &, GameObject<glm::vec3, HB_NUM> *);
 
 extern void
-DrawEnemyShip(const Renderer &, GameObject<std::array<glm::vec3, ES_NUM>, EB_NUM> *);
+DrawEnemyShip(const Renderer &, GameObject<std::array<glm::vec3, ES_NUM>, EB_NUM> *,
+	const glm::vec3 &);
 
 extern void
 let_enemy_shoot(std::atomic<bool> &);

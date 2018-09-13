@@ -184,7 +184,7 @@ mainWindow()
 			if(!gameOver && !gameWin)
 			{
 				DrawHeroShip(rend, &HeroObj);
-				DrawEnemyShip(rend, &EnemyObj);
+				DrawEnemyShip(rend, &EnemyObj, HeroObj.ship_pos);
 				Check_Intersection(&HeroObj, &EnemyObj);
 			}
 			else
@@ -195,6 +195,7 @@ mainWindow()
 					background[0] = MY_GLcolor(200);
 					background[1] = MY_GLcolor(255);
 					background[2] = MY_GLcolor(150);
+					firstCall = true;
 				}
 			}
 			

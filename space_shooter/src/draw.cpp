@@ -32,6 +32,182 @@ intersection_occur(bool &b_ins, bool &b_shoot, bool &s_ins,
 }
 
 void
+DrawHeroShip(const Renderer &rend,
+			 GameObject<glm::vec3, HB_NUM> *hero)
+{
+	/* SHIP */
+	glm::vec3 &s_pos = hero->ship_pos;
+	{
+		if(s_pos[0] < MAX_BOARD_X && s_pos[0] > MIN_BOARD)
+			s_pos[0] += position_changing[0];
+		else
+		{
+			if(s_pos[0] >= MAX_BOARD_X)
+				s_pos[0] -= REQUEST_TO_BOARD;
+			else if(s_pos[0] <= MIN_BOARD)
+				s_pos[0] += REQUEST_TO_BOARD;
+		}
+
+		glm::mat4 model(1.f);
+		model = glm::translate(model, s_pos);
+
+		hero->ship_shader.Bind();
+		hero->tex.Bind(0);
+		hero->ship_shader.SetUniformMatrix4fv("model", 1, GL_FALSE,
+											  glm::value_ptr(model));
+
+		rend.DrawElements(hero->ship_va, hero->ship_ib, hero->ship_shader);
+	}
+
+	/* BLASTERS */
+	{
+		rend.Bind(hero->blaster_va, hero->blaster_ib, hero->blaster_shader);
+
+		for(size_t i = 0; i < HB_NUM; ++i)
+		{
+			if(HB_shoot[i])
+			{
+				glm::vec3 &cb_pos = hero->blaster_pos.at(i);
+
+				if(cb_pos[0] == 0.f)
+				{
+					cb_pos[0] = s_pos[0] + (SHIP_WIDTH / 2.f - BLASTER_WIDTH / 2.f);
+					cb_pos[1] = SHIP_HEIGHT + 25.f;
+				}
+
+				cb_pos[1] += BLASTER_SPEED;
+
+				glm::mat4 model(1.f);
+				model = glm::translate(model, cb_pos);
+				hero->blaster_shader.SetUniformMatrix4fv("model", 1, GL_FALSE,
+														 glm::value_ptr(model));
+				hero->blaster_shader.SetUniform3f("u_Color", 0, 0, 1.f);
+
+				rend.DrawElements(hero->blaster_ib.GetCount());
+
+				if(hero && cb_pos[1] > MW_HEIGHT)
+					blaster_return(HB_shoot[i], cb_pos);
+				if(!hero && cb_pos[1] < 0)
+					blaster_return(HB_shoot[i], cb_pos);
+			}
+		}
+
+		rend.Unbind(hero->blaster_va, hero->blaster_ib, hero->blaster_shader);
+	}
+}
+
+static bool s_x_up = true;
+
+void
+let_enemy_shoot(std::atomic<bool> &run)
+{
+	static double p_time = glfwGetTime();
+	while(run)
+	{
+		if(glfwGetTime() - p_time >= 0.25)
+		{
+			for(size_t b = 0; b < EB_NUM; ++b)
+				if(!EB_shoot[b])
+				{
+					EB_shoot[b] = true;
+					break;
+				}
+			p_time = glfwGetTime();
+		}
+	}
+}
+
+void
+DrawEnemyShip(const Renderer &rend,
+			  GameObject<std::array<glm::vec3, ES_NUM>, EB_NUM> *enemy,
+			  const glm::vec3 &hs_pos)
+{
+	auto &s_pos = enemy->ship_pos;
+	auto &b_pos = enemy->blaster_pos;
+	/* SHIPS */
+	{
+		float s_x_right = 5.f, s_x_left = -5.f;
+
+		if(s_pos.at(0)[0] > MW_WIDTH_F / 5.f)
+			s_x_up = false;
+		else if(s_pos.at(0)[0] <= 10.f)
+			s_x_up = true;
+
+		for(size_t i = 0; i < ES_NUM; ++i)
+		{
+			s_pos.at(i)[0] += (s_x_up ? s_x_right : s_x_left);
+		}
+
+		rend.Bind(enemy->ship_va, enemy->ship_ib, enemy->ship_shader);
+		enemy->tex.Bind(0);
+		for(size_t i = 0; i < ES_NUM; ++i)
+		{
+			if(ES_INS[i])
+				continue;
+			glm::mat4 model(1.f);
+			model = glm::translate(model, s_pos.at(i));
+			enemy->ship_shader.SetUniformMatrix4fv("model", 1, GL_FALSE,
+												   glm::value_ptr(model));
+			rend.DrawElements(enemy->ship_ib.GetCount());
+		}
+
+		rend.Unbind(enemy->ship_va, enemy->ship_ib, enemy->ship_shader);
+	}
+	/* BLASTERS */
+	std::array<glm::vec3, ES_COL_NUM> shoot_ships;
+	size_t shoot_ships_num = 0, shooting_ship = 0;
+
+	for(size_t i = ES_NUM - 1; i > 0; --i)
+	{
+		if( !ES_INS[i] && ((i < ES_NUM && i > (ES_NUM - ES_COL_NUM)) ||
+						   (i < (ES_NUM - ES_COL_NUM) && ES_INS[i + ES_COL_NUM])) )
+			shoot_ships[shoot_ships_num++] = s_pos.at(i);
+	}
+
+	for(size_t i = 0; i < ES_COL_NUM; ++i)
+	{
+		float near = shoot_ships.at(i)[0] - hs_pos[0];
+		if(-30.f < near && near < 30.f)
+		{
+			shooting_ship = i;
+			break;
+		}
+		if(i == ES_COL_NUM - 1)
+			shooting_ship = random_int_range(0, ES_COL_NUM - 1);
+	}
+
+	const glm::vec3 &cs_pos = shoot_ships.at(shooting_ship);
+
+	rend.Bind(enemy->blaster_va, enemy->blaster_ib, enemy->blaster_shader);
+	for(size_t b = 0; b < EB_NUM; ++b)
+		if(EB_shoot[b])
+		{
+			glm::vec3 &cb_pos = b_pos.at(b);
+
+			if(cb_pos[0] == 0)
+			{
+				cb_pos[0] = cs_pos[0] + (SHIP_WIDTH / 2 - BLASTER_WIDTH / 2);
+				cb_pos[1] = cs_pos[1] - BLASTER_HEIGHT;
+			}
+
+			cb_pos[1] -= BLASTER_SPEED;
+
+			glm::mat4 model(1.f);
+			model = glm::translate(model, cb_pos);
+			enemy->
+				blaster_shader.SetUniformMatrix4fv("model", 1, GL_FALSE,
+												   glm::value_ptr(model));
+			enemy->blaster_shader.SetUniform3f("u_Color", 0.9f, 0.1f, 0);
+
+			rend.DrawElements(enemy->blaster_ib.GetCount());
+
+			if(cb_pos[1] < 0)
+				blaster_return(EB_shoot[b], cb_pos);
+		}
+	rend.Unbind(enemy->blaster_va, enemy->blaster_ib, enemy->blaster_shader);
+}
+
+void
 Check_Intersection(GameObject<glm::vec3, HB_NUM> *hero ,
 				   GameObject<std::array<glm::vec3, ES_NUM>, EB_NUM> *enemy)
 {
@@ -84,179 +260,16 @@ Check_Intersection(GameObject<glm::vec3, HB_NUM> *hero ,
 		const float rightV[2] = { eb_pos[0] + BLASTER_WIDTH,
 								  eb_pos[1] - BLASTER_HEIGHT };
 
-		if( ((hs_pos[1] == leftV[1] && 
-			  hs_pos[0] <= leftV[0] && hs_pos[0] + SHIP_WIDTH >= leftV[0]) ||
-			 (hs_pos[1] == rightV[1] && 
-			  hs_pos[0] <= rightV[0] && hs_pos[0] + SHIP_WIDTH >= rightV[0]))  || 
+		if( ((hs_pos[1] <= leftV[1] && leftV[1] <= hs_pos[1] + SHIP_HEIGHT   &&
+			  hs_pos[0] <= leftV[0] && leftV[0] <= hs_pos[0] + SHIP_WIDTH)   ||
+			 (hs_pos[1] <= rightV[1] && rightV[1] <= hs_pos[1] + SHIP_HEIGHT &&
+			  hs_pos[0] <= rightV[0] && rightV[0] <= hs_pos[0] + SHIP_WIDTH))  || 
 			(hs_pos[0] == rightV[0] &&
 			 hs_pos[1] <= rightV[1] && hs_pos[1] + SHIP_HEIGHT >= rightV[1])   ||
 			(hs_pos[0] + SHIP_WIDTH == leftV[0] &&
 			 hs_pos[1] <= leftV[1] && hs_pos[1] + SHIP_HEIGHT >= leftV[1]) )
 			gameOver = true;
 	}
-}
-
-void
-DrawHeroShip(const Renderer &rend,
-			 GameObject<glm::vec3, HB_NUM> *hero)
-{
-	/* SHIP */
-	glm::vec3 &s_pos = hero->ship_pos;
-	{
-		if(s_pos[0] < MAX_BOARD_X && s_pos[0] > MIN_BOARD)
-			s_pos[0] += position_changing[0];
-		else
-		{
-			if(s_pos[0] >= MAX_BOARD_X)
-				s_pos[0] -= REQUEST_TO_BOARD;
-			else if(s_pos[0] <= MIN_BOARD)
-				s_pos[0] += REQUEST_TO_BOARD;
-		}
-
-		glm::mat4 model(1.f);
-		model = glm::translate(model, s_pos);
-
-		hero->ship_shader.Bind();
-		hero->tex.Bind(0);
-		hero->ship_shader.SetUniformMatrix4fv("model", 1, GL_FALSE,
-											  glm::value_ptr(model));
-
-		rend.DrawElements(hero->ship_va, hero->ship_ib, hero->ship_shader);
-	}
-
-	/* BLASTERS */
-	{
-		rend.Bind(hero->blaster_va, hero->blaster_ib, hero->blaster_shader);
-
-		for(size_t i = 0; i < HB_NUM; ++i)
-		{
-			if(HB_shoot[i])
-			{
-				glm::vec3 &cb_pos = hero->blaster_pos.at(i);
-
-				if(cb_pos[0] == 0.f)
-				{		
-					cb_pos[0] = s_pos[0] + (SHIP_WIDTH / 2.f - BLASTER_WIDTH / 2.f);
-					cb_pos[1] = SHIP_HEIGHT + 25.f;
-				}				
-
-				cb_pos[1] += BLASTER_SPEED;
-
-				glm::mat4 model(1.f);
-				model = glm::translate(model, cb_pos);
-				hero->blaster_shader.SetUniformMatrix4fv("model", 1, GL_FALSE,
-														 glm::value_ptr(model));
-				hero->blaster_shader.SetUniform3f("u_Color", 0, 0, 1.f);
-
-				rend.DrawElements(hero->blaster_ib.GetCount());
-
-				if(cb_pos[1] > MW_HEIGHT)
-					blaster_return(HB_shoot[i], cb_pos);
-			}
-		}
-
-		rend.Unbind(hero->blaster_va, hero->blaster_ib, hero->blaster_shader);
-	}
-}
-
-static bool s_x_up = true;
-
-void
-let_enemy_shoot(std::atomic<bool> &run)
-{
-	static double p_time = glfwGetTime();
-	while(run)
-	{
-		if(glfwGetTime() - p_time >= 0.5)
-		{
-			for(size_t b = 0; b < EB_NUM; ++b)
-				if(!EB_shoot[b])
-				{
-					EB_shoot[b] = true;
-					break;
-				}
-			p_time = glfwGetTime();
-		}
-	}
-}
-
-void
-DrawEnemyShip(const Renderer &rend,
-			  GameObject<std::array<glm::vec3, ES_NUM>, EB_NUM> *enemy)
-{
-	auto &s_pos = enemy->ship_pos;
-	auto &b_pos = enemy->blaster_pos;
-	/* SHIPS */
-	{
-		float s_x_right = 5.f, s_x_left = -5.f;
-
-		if(s_pos.at(0)[0] > MW_WIDTH_F / 5.f)
-			s_x_up = false;
-		else if(s_pos.at(0)[0] <= 10.f)
-			s_x_up = true;
-
-		for(size_t i = 0; i < ES_NUM; ++i)
-		{
-			s_pos.at(i)[0] += (s_x_up ? s_x_right : s_x_left);
-		}
-
-		rend.Bind(enemy->ship_va, enemy->ship_ib, enemy->ship_shader);
-		enemy->tex.Bind(0);
-		for(size_t i = 0; i < ES_NUM; ++i)
-		{
-			if(ES_INS[i])
-				continue;
-			glm::mat4 model(1.f);
-			model = glm::translate(model, s_pos.at(i));
-			enemy->ship_shader.SetUniformMatrix4fv("model", 1, GL_FALSE,
-												   glm::value_ptr(model));
-			rend.DrawElements(enemy->ship_ib.GetCount());
-		}
-
-		rend.Unbind(enemy->ship_va, enemy->ship_ib, enemy->ship_shader);
-	}
-	/* BLASTERS */
-	std::array<glm::vec3, ES_COL_NUM> shoot_ships;
-	size_t shoot_ships_num = 0;
-
-	rend.Bind(enemy->blaster_va, enemy->blaster_ib, enemy->blaster_shader);
-
-	for(size_t i = ES_NUM - 1; i > 0; --i)
-	{
-		if( !ES_INS[i] && ((i < ES_NUM && i > (ES_NUM - ES_COL_NUM)) ||
-						   (i < (ES_NUM - ES_COL_NUM) && ES_INS[i + ES_COL_NUM])) )
-			shoot_ships[shoot_ships_num++] = s_pos.at(i);
-	}
-	
-	size_t rand_ship = random_int_range(0, 9);
-	const glm::vec3 &cs_pos = shoot_ships.at(rand_ship);
-	for(size_t b = 0; b < EB_NUM; ++b)
-		if(EB_shoot[b])
-		{
-			glm::vec3 &cb_pos = b_pos.at(b);
-
-			if(cb_pos[0] == 0)
-			{
-				cb_pos[0] = cs_pos[0] + (SHIP_WIDTH / 2 - BLASTER_WIDTH / 2);
-				cb_pos[1] = cs_pos[1] - BLASTER_HEIGHT;
-			}
-
-			cb_pos[1] -= BLASTER_SPEED;
-
-			glm::mat4 model(1.f);
-			model = glm::translate(model, cb_pos);
-			enemy->
-				blaster_shader.SetUniformMatrix4fv("model", 1, GL_FALSE,
-												   glm::value_ptr(model));
-			enemy->blaster_shader.SetUniform3f("u_Color", 0.9f, 0.1f, 0);
-
-			rend.DrawElements(enemy->blaster_ib.GetCount());
-
-			if(cb_pos[1] < 0)
-				blaster_return(EB_shoot[b], cb_pos);
-		}
-
-	rend.Unbind(enemy->blaster_va, enemy->blaster_ib, enemy->blaster_shader);
 }
 
 #undef REQUEST_TO_BOARD

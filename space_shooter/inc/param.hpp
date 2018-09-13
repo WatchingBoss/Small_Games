@@ -5,7 +5,7 @@
 #define ES_NUM     30
 #define ES_RAW_NUM 3
 #define ES_COL_NUM (ES_NUM / ES_RAW_NUM)
-#define EB_NUM     5
+#define EB_NUM     10
 #define HB_NUM     5
 
 /* Ship and Blaster dimansions */
