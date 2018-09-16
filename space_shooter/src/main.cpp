@@ -27,6 +27,14 @@
 bool gameOver = false, gameWin = false;
 
 static void
+callsToGLFW(GLFWwindow *window)
+{
+	glfwSetKeyCallback(window, key_callback);
+	glfwSetCursorPosCallback(window, cursor_pos_callback);
+	glfwSetMouseButtonCallback(window, mouse_button_callback);
+}
+
+static void
 mainWindow()
 {
 	define_window_hints();
@@ -177,7 +185,7 @@ mainWindow()
 
 		while(!glfwWindowShouldClose(window))
 		{
-			glfwSetKeyCallback(window, key_callback);
+			callsToGLFW(window);
 
 			rend.Clear(background[0], background[1], background[2], 1.f);
 

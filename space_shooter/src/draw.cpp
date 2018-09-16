@@ -39,7 +39,7 @@ DrawHeroShip(const Renderer &rend,
 	glm::vec3 &s_pos = hero->ship_pos;
 	{
 		if(s_pos[0] < MAX_BOARD_X && s_pos[0] > MIN_BOARD)
-			s_pos[0] += position_changing[0];
+			s_pos[0] += position_changing;
 		else
 		{
 			if(s_pos[0] >= MAX_BOARD_X)

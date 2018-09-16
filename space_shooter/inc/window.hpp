@@ -21,11 +21,15 @@ framebuffer_size_callback(GLFWwindow *win, int width, int height);
 /* END Window */
 
 /* INPUT */
-extern float position_changing[3];
+extern float position_changing;
 extern bool HB_shoot[HB_NUM];
 
 extern void
-key_callback(GLFWwindow *win, int key, int scancode, int action, int mods);
+key_callback(GLFWwindow *, int, int, int, int);
+extern void
+cursor_pos_callback(GLFWwindow *, double, double);
+extern void
+mouse_button_callback(GLFWwindow *, int, int, int);
 /* END INPUT */
 
 #endif

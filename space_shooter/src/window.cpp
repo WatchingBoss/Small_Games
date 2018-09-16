@@ -34,7 +34,7 @@ framebuffer_size_callback(GLFWwindow *win, int width, int height)
 /* END Window */
 
 /* INPUT */
-float position_changing[3] = {0};
+float position_changing = 0;
 
 void
 key_callback(GLFWwindow *win, int key, int scancode, int action, int mods)
@@ -48,21 +48,13 @@ key_callback(GLFWwindow *win, int key, int scancode, int action, int mods)
 	float position_changing_value = POSITION_CHANGING_VALUE;
 	switch(key)
 	{
-	  case GLFW_KEY_UP:
-		  if(action == GLFW_PRESS)
-		  {}
-		  break;
-	  case GLFW_KEY_DOWN:
-		  if(action == GLFW_PRESS)
-		  {}
-		  break;
 	  case GLFW_KEY_RIGHT:
 		  if(action == GLFW_PRESS)
-			  position_changing[0] = position_changing_value;
+			  position_changing = position_changing_value;
 		  break;
 	  case GLFW_KEY_LEFT:
 		  if(action == GLFW_PRESS)
-			  position_changing[0]  = -position_changing_value;
+			  position_changing = -position_changing_value;
 		  break;
 	  case GLFW_KEY_SPACE:
 		  if(action == GLFW_PRESS)
@@ -79,16 +71,36 @@ key_callback(GLFWwindow *win, int key, int scancode, int action, int mods)
 		  break;
 	}
 
-	if( (key == GLFW_KEY_UP    || key == GLFW_KEY_DOWN  ||
-		 key == GLFW_KEY_RIGHT || key == GLFW_KEY_LEFT) &&
-		action == GLFW_RELEASE)
+	if( (key == GLFW_KEY_RIGHT || key == GLFW_KEY_LEFT) && action == GLFW_RELEASE)
 	{
-		for(size_t i = 0; i < 3; ++i)
-			position_changing[i] = 0;
+		position_changing = 0;
 	}
 
 	(void)scancode;
 	(void)mods;
+}
+
+void
+mouse_button_callback(GLFWwindow *win, int button, int action, int mods)
+{
+	switch(button)
+	{
+	  case GLFW_MOUSE_BUTTON_LEFT:
+		  if(action == GLFW_PRESS)
+			  for(size_t i = 0; i < HB_NUM; ++i)
+				  if(!HB_shoot[i])
+				  {
+					  HB_shoot[i] = true;
+					  break;
+				  }
+		  break;
+	}
+}
+
+void
+cursor_pos_callback(GLFWwindow *win, double xpos, double ypos)
+{
+	/* TODO: change x position with moving mouse */
 }
 
 /* END INPUT */
