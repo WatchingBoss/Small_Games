@@ -46,7 +46,7 @@ xmalloc(int size)
 /* END Dynamic allocation */
 
 uint32
-random_int_range(const int &min, const int &max)
+random_int_range(int min, int max)
 {
 	std::random_device rd;
 	std::mt19937 eng(rd());
@@ -56,7 +56,7 @@ random_int_range(const int &min, const int &max)
 }
 
 float
-random_float_range(const float &min, const float &max)
+random_float_range(float min, float max)
 {
 	std::random_device rd;
 	std::mt19937 eng(rd());

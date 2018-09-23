@@ -1,6 +1,7 @@
 #include "../inc/draw.hpp"
 
-#include <cstdio>
+#include <iostream>
+#include <cmath>
 
 #define REQUEST_TO_BOARD (POSITION_CHANGING_VALUE / 5)
 #define MAX_BOARD_X (MW_WIDTH_F - SHIP_WIDTH / 2.f)
@@ -96,8 +97,6 @@ DrawHeroShip(const Renderer &rend,
 	}
 }
 
-static bool s_x_up = true;
-
 void
 let_enemy_shoot(std::atomic<bool> &run)
 {
@@ -117,6 +116,8 @@ let_enemy_shoot(std::atomic<bool> &run)
 	}
 }
 
+static bool s_x_up = true;
+
 void
 DrawEnemyShip(const Renderer &rend,
 			  GameObject<std::array<glm::vec3, ES_NUM>, EB_NUM> *enemy,
@@ -124,6 +125,11 @@ DrawEnemyShip(const Renderer &rend,
 {
 	auto &s_pos = enemy->ship_pos;
 	auto &b_pos = enemy->blaster_pos;
+	
+	/* 
+	 * TODO: Make first, second and third rows move differently
+	 */
+
 	/* SHIPS */
 	{
 		float s_x_right = 5.f, s_x_left = -5.f;
@@ -270,6 +276,41 @@ Check_Intersection(GameObject<glm::vec3, HB_NUM> *hero ,
 			 hs_pos[1] <= leftV[1] && hs_pos[1] + SHIP_HEIGHT >= leftV[1]) )
 			gameOver = true;
 	}
+}
+
+static float circles = 0, circles_chang = 1, center_chang = 0.05f;
+void
+DrawBackStars(const Renderer *rend, BackStar *star)
+{
+	star->tex.Bind(0);
+	rend->Bind(star->va, star->ib, star->shader);
+
+	for(size_t i = 0; i < STARS_NUM; ++i)
+	{
+		glm::mat4 model(1.f);
+		glm::vec3 &pos = star->dim.pos.at(i);
+		float
+			&center_x = star->dim.center.at(i).at(0),
+			&center_y = star->dim.center.at(i).at(1),
+			&angle = star->dim.center.at(i).at(2),
+			r  = star->dim.center.at(i).at(3);
+		pos.x = center_x + cosf(angle) * r;
+		pos.y = center_y + sinf(angle) * r;
+		angle == 360 ? angle = 1 : angle += 0.03f;
+
+		if     (circles == 1000.f) circles_chang = -1.f;
+		else if(circles == 0.f)    circles_chang =  1.f;
+
+		circles += circles_chang;
+		center_x += cosf(center_chang) * circles_chang;
+		center_y += sinf(center_chang) * circles_chang;
+
+		model = glm::translate(model, pos);
+		star->shader.SetUniformMatrix4fv("model", 1, GL_FALSE,
+										 glm::value_ptr(model));
+		rend->DrawElements(star->ib.GetCount());
+	}
+	rend->Unbind(star->va, star->ib, star->shader);
 }
 
 #undef REQUEST_TO_BOARD

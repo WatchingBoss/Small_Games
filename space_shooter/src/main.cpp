@@ -5,6 +5,7 @@
 #include <array>
 #include <thread>
 #include <atomic>
+#include <cmath>
 
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
@@ -74,17 +75,13 @@ mainWindow()
 		Texture ES_tex("../media/enemyship.png");
 		Texture OverPic("../media/over.png");
 		Texture WinPic("../media/win.png");
+		Texture StarsPic("../media/star.png");
 
 		float Ship[] = {
 			0.f,        0.f,         0.f, 0.f, 0.f,
 			SHIP_WIDTH, SHIP_HEIGHT, 0.f, 1.f, 1.f,
 			SHIP_WIDTH, 0.f,         0.f, 1.f, 0.f,
 			0.f,        SHIP_HEIGHT, 0.f, 0.f, 1.f
-		};
-
-		uint32 index[] = {
-			0, 1, 2,
-			0, 1, 3
 		};
 
 		float Blaster[] = {
@@ -99,6 +96,18 @@ mainWindow()
 			MW_WIDTH_F,  MW_HEIGHT_F, 0.f, 1.f, 1.f,
 			MW_WIDTH_F,  0.f,         0.f, 1.f, 0.f,
 			0.f,         MW_HEIGHT_F, 0.f, 0.f, 1.f
+		};
+
+		float StarsV[] = {
+			0.f,        0.f,         0.f, 0.f, 0.f,
+			STAR_WIDTH, STAR_HEIGHT, 0.f, 1.f, 1.f,
+			STAR_WIDTH, 0.f,         0.f, 1.f, 0.f,
+			0.f,        STAR_HEIGHT, 0.f, 0.f, 1.f
+		};
+
+		uint32 index[] = {
+			0, 1, 2,
+			0, 1, 3
 		};
 
 		VertexArray Ship_vao;
@@ -125,7 +134,6 @@ mainWindow()
 		VertexBuffer Blaster_vbo(Blaster, sizeof Blaster);
 		VertexBufferLayout Blaster_layout;
 		Blaster_layout.Push(3, MY_FLOAT);
-//		Blaster_layout.Push(2, MY_FLOAT);
 		Blaster_vao.AddBuffer(Blaster_vbo, Blaster_layout);
 
 		IndexBuffer Blaster_ibo(index, sizeof index / sizeof *index);
@@ -150,6 +158,17 @@ mainWindow()
 		EndGame_vbo.Unbind();
 		EndGame_ibo.Unbind();
 
+		VertexArray Stars_vao;
+		VertexBuffer Stars_vbo(StarsV, sizeof StarsV);
+		VertexBufferLayout Stars_layout;
+		Stars_layout.Push(3, MY_FLOAT);
+		Stars_layout.Push(2, MY_FLOAT);
+		Stars_vao.AddBuffer(Stars_vbo, Stars_layout);
+		IndexBuffer Stars_ibo(index, sizeof index / sizeof *index);
+		Stars_vao.Unbind();
+		Stars_vbo.Unbind();
+		Stars_ibo.Unbind();
+
 		Renderer rend;
 
 		glm::vec3 HS_pos(MW_WIDTH_F / 2.f - SHIP_WIDTH / 2.f, 25.f, 0.f);
@@ -173,15 +192,42 @@ mainWindow()
 				shader, Blaster_shader, ES_tex, ES_pos, EB_pos
 				};
 
+		std::array<std::array<float, 4>, STARS_NUM> star_center;
+		std::array<glm::vec3, STARS_NUM> star_pos;
+		for(size_t i = 0; i < STARS_NUM; ++i)
+		{
+			float cx = 0, cy = 0, angle = 0, py = 0, px = 0, r = 0, sx = 0, sy = 0;
+
+			cx = random_float_range(0, MW_WIDTH_F);
+			cy = random_float_range(0, MW_HEIGHT_F);
+
+			py = random_float_range(0, MW_WIDTH_F);
+			px = random_float_range(0, MW_HEIGHT_F);
+			r = sqrtf( (px * px) + (py * py) );
+
+			angle = asinf(px / r);
+
+			sx = cx + py;
+			sy = cy + px;
+
+			std::array<float, 4> c = {cx, cy, angle, r};
+			glm::vec3 p = glm::vec3(sx, sy, 0.f);
+
+			star_center.at(i) = c;
+			star_pos.at(i) = p;
+		}
+		StarPos stars_pos { star_center, star_pos };
+			
+		BackStar backStars {Stars_vao, Stars_ibo, shader, StarsPic, stars_pos};
 		EndText theEnd {EndGame_vao, EndGame_ibo, shader, OverPic, WinPic};
 
 		std::atomic<bool> run_game { true };
 		std::thread enemy_shoot_t(let_enemy_shoot, std::ref(run_game));
 
 		float background[3] = {
-			MY_GLcolor(18.f), MY_GLcolor(191.f), MY_GLcolor(91.f)
+			MY_GLcolor(1.f), MY_GLcolor(6.f), MY_GLcolor(50.f)
 		};
-		static bool firstCall = false;
+		static bool firstCall = true;
 
 		while(!glfwWindowShouldClose(window))
 		{
@@ -191,6 +237,7 @@ mainWindow()
 
 			if(!gameOver && !gameWin)
 			{
+				DrawBackStars(&rend, &backStars);
 				DrawHeroShip(rend, &HeroObj);
 				DrawEnemyShip(rend, &EnemyObj, HeroObj.ship_pos);
 				Check_Intersection(&HeroObj, &EnemyObj);
@@ -198,12 +245,12 @@ mainWindow()
 			else
 			{
 				EndOfGame(&rend, &theEnd, gameWin ? true : false);
-				if(!firstCall)
+				if(firstCall)
 				{
 					background[0] = MY_GLcolor(200);
 					background[1] = MY_GLcolor(255);
 					background[2] = MY_GLcolor(150);
-					firstCall = true;
+					firstCall = false;
 				}
 			}
 			
