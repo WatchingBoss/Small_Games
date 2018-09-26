@@ -173,11 +173,16 @@ mainWindow()
 
 		glm::vec3 HS_pos(MW_WIDTH_F / 2.f - SHIP_WIDTH / 2.f, 25.f, 0.f);
 		std::array<glm::vec3, ES_NUM> ES_pos;
-		for(size_t j = 0, i = 0; j < ES_RAW_NUM; ++j)
-			for(size_t ii = 0; ii < ES_COL_NUM; ++ii, ++i)
+		for(size_t raw = 0, i = 0; raw < ES_RAW_NUM; ++raw)
+			for (size_t ii = 0; ii < ES_COL_NUM; ++ii, ++i)
+			{
+				float x, y;
+				if (raw == 1)
+					x = 10.f + 85.f * (float)ii;
+				x = 10.f + 85.f * (float)ii;
 				ES_pos.at(i) = glm::vec3(10.f + 85.f * (float)ii,
-										 MW_HEIGHT_F - 100.f * (j + 1) - 25.f,
-										 0.f);
+					MW_HEIGHT_F - 100.f * (raw + 1) - 25.f, 0.f);
+			}
 		std::array<glm::vec3, HB_NUM> HB_pos;
 		HB_pos.fill(glm::vec3(0));
 		std::array<glm::vec3, EB_NUM> EB_pos;

@@ -134,14 +134,15 @@ DrawEnemyShip(const Renderer &rend,
 	{
 		float s_x_right = 5.f, s_x_left = -5.f;
 
-		if(s_pos.at(0)[0] > MW_WIDTH_F / 5.f)
+		if(s_pos.at(0).x > MW_WIDTH_F / 5.f)
 			s_x_up = false;
-		else if(s_pos.at(0)[0] <= 10.f)
+		else if(s_pos.at(0).x <= 10.f)
 			s_x_up = true;
 
-		for(size_t i = 0; i < ES_NUM; ++i)
-		{
-			s_pos.at(i)[0] += (s_x_up ? s_x_right : s_x_left);
+		for (size_t i = 0; i < ES_NUM; ++i) {
+			if (9 < i && i < 20)
+				s_pos.at(i).x += (s_x_up ? s_x_left : s_x_right);
+			s_pos.at(i).x += (s_x_up ? s_x_right : s_x_left);
 		}
 
 		rend.Bind(enemy->ship_va, enemy->ship_ib, enemy->ship_shader);
@@ -278,13 +279,14 @@ Check_Intersection(GameObject<glm::vec3, HB_NUM> *hero ,
 	}
 }
 
-static float circles = 0, circles_chang = 1, center_chang = 0.05f;
+static float circles = 0, circles_chang = 1.f, center_chang = 0.05f;
 void
 DrawBackStars(const Renderer *rend, BackStar *star)
 {
-	star->tex.Bind(0);
-	rend->Bind(star->va, star->ib, star->shader);
-
+  star->tex.Bind(0);
+  rend->Bind(star->va, star->ib, star->shader);
+  constexpr float starSpeed = 0.02f;
+		
 	for(size_t i = 0; i < STARS_NUM; ++i)
 	{
 		glm::mat4 model(1.f);
@@ -296,10 +298,10 @@ DrawBackStars(const Renderer *rend, BackStar *star)
 			r  = star->dim.center.at(i).at(3);
 		pos.x = center_x + cosf(angle) * r;
 		pos.y = center_y + sinf(angle) * r;
-		angle == 360 ? angle = 1 : angle += 0.03f;
+		angle == 360 ? angle = 1 : angle += 1.f * starSpeed;
 
-		if     (circles == 1000.f) circles_chang = -1.f;
-		else if(circles == 0.f)    circles_chang =  1.f;
+		if     (circles == 1000.f) circles_chang = -0.5f;
+		else if(circles == 0.f)    circles_chang =  0.5f;
 
 		circles += circles_chang;
 		center_x += cosf(center_chang) * circles_chang;
