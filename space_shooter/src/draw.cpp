@@ -129,6 +129,30 @@ void drawStartInit()
 	}
 }
 
+static void enemyShipMovingSide(float x, bool &right)
+{
+	if (x > MW_WIDTH_F / 5.f)
+		right = false;
+	else if (x <= 10.f)
+		right = true;
+}
+
+static void setEnemyShipPos(std::array<glm::vec3, ES_NUM> &s_pos)
+{
+	enemyShipMovingSide(s_pos.at(0).x, s_x_up[0]);
+	enemyShipMovingSide(s_pos.at(10).x, s_x_up[1]);
+	enemyShipMovingSide(s_pos.at(20).x, s_x_up[2]);
+
+	for (size_t i = 0; i < ES_NUM; ++i) {
+		if (i <= 9)
+			s_pos.at(i).x += (s_x_up[0] ? s_x_right[0] : s_x_left[0]);
+		else if (9 < i && i < 20)
+			s_pos.at(i).x += (s_x_up[1] ? s_x_right[1] : s_x_left[1]);
+		else if (i >= 20)
+			s_pos.at(i).x += (s_x_up[2] ? s_x_right[2] : s_x_left[2]);
+	}
+}
+
 void
 DrawEnemyShip(const Renderer &rend,
 			  GameObject<std::array<glm::vec3, ES_NUM>, EB_NUM> *enemy,
@@ -143,27 +167,7 @@ DrawEnemyShip(const Renderer &rend,
 
 	/* SHIPS */
 	{
-		if (s_pos.at(0).x > MW_WIDTH_F / 5.f)
-			s_x_up[0] = false;
-		else if (s_pos.at(0).x <= 10.f)
-			s_x_up[0] = true;
-		if (s_pos.at(10).x > MW_WIDTH_F / 5.f)
-			s_x_up[1] = false;
-		else if (s_pos.at(10).x <= 10.f)
-			s_x_up[1] = true;
-		if (s_pos.at(20).x > MW_WIDTH_F / 5.f)
-			s_x_up[2] = false;
-		else if (s_pos.at(20).x <= 10.f)
-			s_x_up[2] = true;
-
-		for (size_t i = 0; i < ES_NUM; ++i) {
-			if(i <= 9)
-				s_pos.at(i).x += (s_x_up[0] ? s_x_right[0] : s_x_left[0]);
-			else if (9 < i && i < 20)
-				s_pos.at(i).x += (s_x_up[1] ? s_x_right[1] : s_x_left[1]);
-			else if (i >= 20)
-				s_pos.at(i).x += (s_x_up[2] ? s_x_right[2] : s_x_left[2]);
-		}
+		setEnemyShipPos(s_pos);
 
 		rend.Bind(enemy->ship_va, enemy->ship_ib, enemy->ship_shader);
 		enemy->tex.Bind(0);
@@ -184,22 +188,23 @@ DrawEnemyShip(const Renderer &rend,
 	std::array<glm::vec3, ES_COL_NUM> shoot_ships;
 	size_t shoot_ships_num = 0, shooting_ship = 0;
 
-	for(size_t i = ES_NUM - 1; i > 0; --i)
+	for(int i = ES_NUM - 1; i >= 0; --i)
 	{
-		if( !ES_INS[i] && ((i < ES_NUM && i > (ES_NUM - ES_COL_NUM)) ||
-						   (i < (ES_NUM - ES_COL_NUM) && ES_INS[i + ES_COL_NUM])) )
+		if (!ES_INS[i] && (
+			(i > (ES_NUM - ES_COL_NUM)) ||
+			(i < (ES_NUM - ES_COL_NUM) && ES_INS[i + ES_COL_NUM]) ||
+			(i < (ES_NUM - ES_COL_NUM) && (s_pos[i + ES_COL_NUM].x != s_pos[i].x))
+			))
 			shoot_ships[shoot_ships_num++] = s_pos.at(i);
+		if (shoot_ships_num == ES_COL_NUM) break;
 	}
-
+	
 	for(size_t i = 0; i < ES_COL_NUM; ++i)
 	{
-		float near = shoot_ships.at(i)[0] - hs_pos[0];
-		if(-30.f < near && near < 30.f)
-		{
+		float near = shoot_ships.at(i).x - hs_pos.x;
+		if (-30.f < near && near < 30.f)
 			shooting_ship = i;
-			break;
-		}
-		if(i == ES_COL_NUM - 1)
+		else
 			shooting_ship = randomRange(0, ES_COL_NUM - 1);
 	}
 
@@ -217,7 +222,7 @@ DrawEnemyShip(const Renderer &rend,
 				cb_pos[1] = cs_pos[1] - BLASTER_HEIGHT;
 			}
 
-			cb_pos[1] -= BLASTER_SPEED;
+			cb_pos.y -= BLASTER_SPEED;
 
 			glm::mat4 model(1.f);
 			model = glm::translate(model, cb_pos);
@@ -228,7 +233,7 @@ DrawEnemyShip(const Renderer &rend,
 
 			rend.DrawElements(enemy->blaster_ib.GetCount());
 
-			if(cb_pos[1] < 0)
+			if(cb_pos.y < 0)
 				blaster_return(EB_shoot[b], cb_pos);
 		}
 	rend.Unbind(enemy->blaster_va, enemy->blaster_ib, enemy->blaster_shader);
