@@ -116,7 +116,18 @@ let_enemy_shoot(std::atomic<bool> &run)
 	}
 }
 
-static bool s_x_up = true;
+float s_x_right[ES_RAW_NUM], s_x_left[ES_RAW_NUM];
+float ES_START_POINT[ES_RAW_NUM] = {10.f, 110.f, 210.f};
+static bool s_x_up[ES_RAW_NUM] = { true };
+
+void drawStartInit()
+{
+	for (size_t i = 0; i < ES_RAW_NUM; ++i)
+	{
+		s_x_right[i] = randomRange(1.f, 5.f);
+		s_x_left[i] = -randomRange(1.f, 5.f);
+	}
+}
 
 void
 DrawEnemyShip(const Renderer &rend,
@@ -132,17 +143,26 @@ DrawEnemyShip(const Renderer &rend,
 
 	/* SHIPS */
 	{
-		float s_x_right = 5.f, s_x_left = -5.f;
-
-		if(s_pos.at(0).x > MW_WIDTH_F / 5.f)
-			s_x_up = false;
-		else if(s_pos.at(0).x <= 10.f)
-			s_x_up = true;
+		if (s_pos.at(0).x > MW_WIDTH_F / 5.f)
+			s_x_up[0] = false;
+		else if (s_pos.at(0).x <= 10.f)
+			s_x_up[0] = true;
+		if (s_pos.at(10).x > MW_WIDTH_F / 5.f)
+			s_x_up[1] = false;
+		else if (s_pos.at(10).x <= 10.f)
+			s_x_up[1] = true;
+		if (s_pos.at(20).x > MW_WIDTH_F / 5.f)
+			s_x_up[2] = false;
+		else if (s_pos.at(20).x <= 10.f)
+			s_x_up[2] = true;
 
 		for (size_t i = 0; i < ES_NUM; ++i) {
-			if (9 < i && i < 20)
-				s_pos.at(i).x += (s_x_up ? s_x_left : s_x_right);
-			s_pos.at(i).x += (s_x_up ? s_x_right : s_x_left);
+			if(i <= 9)
+				s_pos.at(i).x += (s_x_up[0] ? s_x_right[0] : s_x_left[0]);
+			else if (9 < i && i < 20)
+				s_pos.at(i).x += (s_x_up[1] ? s_x_right[1] : s_x_left[1]);
+			else if (i >= 20)
+				s_pos.at(i).x += (s_x_up[2] ? s_x_right[2] : s_x_left[2]);
 		}
 
 		rend.Bind(enemy->ship_va, enemy->ship_ib, enemy->ship_shader);
@@ -180,7 +200,7 @@ DrawEnemyShip(const Renderer &rend,
 			break;
 		}
 		if(i == ES_COL_NUM - 1)
-			shooting_ship = random_int_range(0, ES_COL_NUM - 1);
+			shooting_ship = randomRange(0, ES_COL_NUM - 1);
 	}
 
 	const glm::vec3 &cs_pos = shoot_ships.at(shooting_ship);

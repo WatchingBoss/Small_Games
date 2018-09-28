@@ -73,7 +73,11 @@ DrawEnemyShip(const Renderer &, GameObject<std::array<glm::vec3, ES_NUM>, EB_NUM
 extern void
 DrawBackStars(const Renderer *, BackStar *);
 
+extern void drawStartInit();
+
 extern void
 EndOfGame(const Renderer *, EndText *, const bool &);
+
+extern float ES_START_POINT[ES_RAW_NUM];
 
 #endif

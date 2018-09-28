@@ -177,11 +177,14 @@ mainWindow()
 			for (size_t ii = 0; ii < ES_COL_NUM; ++ii, ++i)
 			{
 				float x, y;
-				if (raw == 1)
-					x = 10.f + 85.f * (float)ii;
-				x = 10.f + 85.f * (float)ii;
-				ES_pos.at(i) = glm::vec3(10.f + 85.f * (float)ii,
-					MW_HEIGHT_F - 100.f * (raw + 1) - 25.f, 0.f);
+				if (raw == 0)
+					x = ES_START_POINT[0] + 85.f * (float)ii;
+				else if (raw == 1)
+					x = ES_START_POINT[1] + 85.f * (float)ii;
+				else if (raw == 2)
+					x = ES_START_POINT[2] + 85.f * (float)ii;
+				y = MW_HEIGHT_F - 100.f * (float)(raw + 1) - SHIP_HEIGHT / 4.f;
+				ES_pos.at(i) = glm::vec3(x, y, 0.f);
 			}
 		std::array<glm::vec3, HB_NUM> HB_pos;
 		HB_pos.fill(glm::vec3(0));
@@ -203,11 +206,11 @@ mainWindow()
 		{
 			float cx = 0, cy = 0, angle = 0, py = 0, px = 0, r = 0, sx = 0, sy = 0;
 
-			cx = random_float_range(0, MW_WIDTH_F);
-			cy = random_float_range(0, MW_HEIGHT_F);
+			cx = randomRange(0.f, MW_WIDTH_F);
+			cy = randomRange(0.f, MW_HEIGHT_F);
 
-			py = random_float_range(0, MW_WIDTH_F);
-			px = random_float_range(0, MW_HEIGHT_F);
+			py = randomRange(0.f, MW_WIDTH_F);
+			px = randomRange(0.f, MW_HEIGHT_F);
 			r = sqrtf( (px * px) + (py * py) );
 
 			angle = asinf(px / r);
@@ -225,6 +228,8 @@ mainWindow()
 			
 		BackStar backStars {Stars_vao, Stars_ibo, shader, StarsPic, stars_pos};
 		EndText theEnd {EndGame_vao, EndGame_ibo, shader, OverPic, WinPic};
+
+		drawStartInit();
 
 		std::atomic<bool> run_game { true };
 		std::thread enemy_shoot_t(let_enemy_shoot, std::ref(run_game));
