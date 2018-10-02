@@ -37,7 +37,7 @@ if(MSVC)
 	${OPEN_GL_PATH}lib/glew32s.lib
 	${OPEN_GL_PATH}lib/glfw3.lib)
 else()
-  target_link_libraries(ForOpenGL INTERFACE glfw GL GLEW)
+  target_link_libraries(ForOpenGL INTERFACE glfw GL GLEW -lpthread)
 endif()
 
 file(GLOB PROJECT_SOURCES ${PROJECT_SOURCE_DIR}/src/*.cpp)
