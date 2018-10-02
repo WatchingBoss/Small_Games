@@ -1,5 +1,6 @@
 #include <ncurses.h>
 #include <stdlib.h>
+#include <string.h>
 #include <unistd.h>
 #include <time.h>
 
@@ -42,6 +43,8 @@ game()
 	init_pair(2, COLOR_BLUE, COLOR_BLUE);
 	init_pair(3, COLOR_RED, COLOR_RED);
 
+	char cleanBuffer[COLS / 2];
+	memset(cleanBuffer, ' ', COLS / 2);
 	const int startx = (COLS - width) / 2, starty = (LINES - height) / 2;
 
 	while(answer == 'y' || answer == 'Y')
@@ -64,8 +67,8 @@ game()
 			answer = getch();
 			tail = 0;
 			score = 0;
-			mvprintw(starty - 5, startx, "                              ");
-			mvprintw(starty - 2, startx + 10, "             ");
+			mvprintw(starty - 5, startx, cleanBuffer);
+			mvprintw(starty - 2, startx + 10, cleanBuffer);
 		}
 		else
 			answer = 'x';
